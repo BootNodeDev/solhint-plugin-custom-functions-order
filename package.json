@@ -1,0 +1,13 @@
+{
+  "name": "solhint-plugin-custom-functions-order",
+  "version": "0.0.1",
+  "description": "",
+  "keywords": [
+    "solhint",
+    "plugin",
+    "solidity"
+  ],
+  "main": "index.js",
+  "author": "lmcorbalan",
+  "license": "MIT"
+}
