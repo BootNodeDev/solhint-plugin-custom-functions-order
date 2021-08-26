@@ -12,9 +12,13 @@ function isFunctionDefinition(node) {
 
 class CustomOrderingChecker {
   constructor(reporter, config) {
-    this.ruleId = 'order'
+    this.ruleId = 'custom-ordering'
     this.reporter = reporter
-    this.config = config
+
+    this.functionsOrder = config
+      && config.rules[`custom-functions-order/${this.ruleId}`]
+      && config.rules[`custom-functions-order/${this.ruleId}`][1]
+      && config.rules[`custom-functions-order/${this.ruleId}`][1].functionsOrder
   }
 
   SourceUnit(node) {
@@ -35,10 +39,10 @@ class CustomOrderingChecker {
     }
 
     let maxChild = children[0]
-    let [maxComparisonValue, maxLabel] = orderFunction(children[0])
+    let [maxComparisonValue, maxLabel] = orderFunction(children[0], this.functionsOrder)
 
     for (let i = 1; i < children.length; i++) {
-      const [comparisonValue, label] = orderFunction(children[i])
+      const [comparisonValue, label] = orderFunction(children[i], this.functionsOrder)
       if (comparisonValue < maxComparisonValue) {
         this.report(children[i], maxChild, label, maxLabel)
         return
@@ -104,7 +108,7 @@ function sourceUnitPartOrder(node) {
   throw new Error('Unrecognized source unit part, please report this issue')
 }
 
-function contractPartOrder(node) {
+function contractPartOrder(node, functionsOrder) {
   if (node.type === 'UsingForDeclaration') {
     return [0, 'using for declaration']
   }
@@ -146,15 +150,15 @@ function contractPartOrder(node) {
 
   if (node.type === 'FunctionDefinition') {
     const { stateMutability, visibility } = node
-    const customOrder = this.config.functionsOrder || []
 
-    if (customOrder.length === 0) {
+    if (!functionsOrder || functionsOrder.length === 0) {
       return defaultOrdering(node)
     }
 
-    const index = customOrder.findIndex(e => e === `${visibility} ${stateMutability}`)
+    const vs = stateMutability ? [visibility, stateMutability].join(' ') : visibility
+    const index = functionsOrder.findIndex(e => e === vs)
 
-    const label = [visibility, stateMutability, 'function'].join(' ')
+    const label = [vs, 'function'].join(' ')
     const weight = 70 + ((index + 1) * 10)
 
     return [weight, label]
@@ -195,4 +199,4 @@ function defaultOrdering(node) {
   throw new Error('Unknown order for function, please report this issue')
 }
 
-module.exports = CustomOrderingChecker
+module.exports = [CustomOrderingChecker]
